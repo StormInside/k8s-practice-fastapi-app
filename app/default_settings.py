@@ -1,0 +1,2 @@
+DEFAULT_POSTGRES_WRITE_URL = "postgresql+asyncpg://postgres-user:ExampleUserPassword@localhost:30504/test-database"
+DEFAULT_POSTGRES_READ_URL = "postgresql+asyncpg://postgres-user:ExampleUserPassword@localhost:30505/test-database"
