@@ -1,43 +1,62 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from sqlalchemy.future import select
 from pydantic import BaseModel
 from contextlib import asynccontextmanager
+import logging
+
 
 from app.db import (
     get_db_read,
     get_db_write,
     create_db_and_tables,
 )
+
 from app.models import User
-from app.cache import mongo_collection
+from app.cache import RedisCache
 
 
-# Pydantic model for user input validation
+logger = logging.getLogger("uvicorn.error")
+
 class UserCreate(BaseModel):
     name: str
     email: str
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize DB
     await create_db_and_tables()
+
+    # Initialize and connect Redis cache
+    cache = RedisCache(host="localhost", port=6379, db=0)
+    try:
+        await cache.connect()
+        app.state.cache = cache
+    except Exception as e:
+        # Could not connect to Redis, log a warning and continue
+        logger.warning(f"Failed to connect to Redis: {e}. Continuing without cache.")
+        app.state.cache = None  # No cache available
+
     yield
+
+    # Close Redis connection on shutdown
+    if app.state.cache:
+        await app.state.cache.close()
+
 
 app = FastAPI(lifespan=lifespan)
 
-# Endpoint to create a new user (Write Operation)
-@app.post("/users/")
-async def create_user(user: UserCreate, db=Depends(get_db_write)):
-    # Check if user is in MongoDB cache
-    # cached_user = await mongo_collection.find_one({"email": user.email})
-    # if cached_user:
-    #     return {"message": "User already exists in cache", "user": cached_user}
 
-    # Check if user exists in PostgreSQL
+def get_cache(request: Request) -> RedisCache:
+    # Dependency to retrieve the cache from app.state
+    return request.app.state.cache
+
+
+@app.post("/users/")
+async def create_user(user: UserCreate, db=Depends(get_db_write), cache: RedisCache = Depends(get_cache)):
     result = await db.execute(select(User).where(User.email == user.email))
     existing_user = result.scalars().first()
     if existing_user:
-        # Cache the user in MongoDB
-        # await mongo_collection.insert_one({"email": existing_user.email, "name": existing_user.name})
         return {"message": "User already exists in database", "user": {"email": existing_user.email, "name": existing_user.name}}
 
     # Create new user in PostgreSQL
@@ -46,33 +65,34 @@ async def create_user(user: UserCreate, db=Depends(get_db_write)):
     await db.commit()
     await db.refresh(new_user)
 
-    # Cache the new user in MongoDB
-    # await mongo_collection.insert_one({"email": new_user.email, "name": new_user.name})
+    # Cache the new user in Redis if cache is available
+    if cache:
+        await cache.put_user(new_user.email, {"email": new_user.email, "name": new_user.name})
 
     return {"message": "User created", "user": {"email": new_user.email, "name": new_user.name}}
 
-# Endpoint to retrieve a user (Read Operation)
 @app.get("/users/{user_email}")
-async def read_user(user_email: str, db=Depends(get_db_read)):
-    # Check MongoDB cache first
-    # cached_user = await mongo_collection.find_one({"email": user_email})
-    # if cached_user:
-    #     return {"user": cached_user}
+async def read_user(user_email: str, db=Depends(get_db_read), cache: RedisCache = Depends(get_cache)):
+    # Check Redis first if available
+    if cache:
+        cached_user = await cache.get_user(user_email)
+        if cached_user:
+            return {"user": cached_user}
 
-    # Retrieve user from PostgreSQL if not in cache
+    # If not in cache or no cache, fetch from DB
     result = await db.execute(select(User).where(User.email == user_email))
     user = result.scalars().first()
     if user:
-        # Cache the user in MongoDB
-        # await mongo_collection.insert_one({"email": user.email, "name": user.name})
-        return {"user": {"email": user.email, "name": user.name}}
+        user_data = {"email": user.email, "name": user.name}
+        # Store in redis if available
+        if cache:
+            await cache.put_user(user.email, user_data)
+        return {"user": user_data}
     else:
         return {"message": "User not found"}
 
 @app.get("/users")
-async def read_user(db=Depends(get_db_read)):
-
-    # Retrieve user from PostgreSQL if not in cache
+async def read_users(db=Depends(get_db_read)):
     result = await db.execute(select(User))
     users = result.scalars().all()
-    return {"users": users}
+    return {"users": [{"email": u.email, "name": u.name} for u in users]}

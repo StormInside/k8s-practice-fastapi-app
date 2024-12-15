@@ -1,18 +1,13 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker, declarative_base
-import os
 
 from app.models import Base
 
-# Read database URLs from environment variables
-POSTGRES_WRITE_URL = os.getenv("POSTGRES_WRITE_URL")
-if not POSTGRES_WRITE_URL:
-    from app.default_settings import DEFAULT_POSTGRES_WRITE_URL
-    POSTGRES_WRITE_URL = DEFAULT_POSTGRES_WRITE_URL
-POSTGRES_READ_URL = os.getenv("POSTGRES_READ_URL")
-if not POSTGRES_READ_URL:
-    from app.default_settings import DEFAULT_POSTGRES_READ_URL
-    POSTGRES_READ_URL = DEFAULT_POSTGRES_READ_URL
+from app.settings import POSTGRES_WRITE_URL
+POSTGRES_WRITE_URL = POSTGRES_WRITE_URL
+
+from app.settings import POSTGRES_READ_URL
+POSTGRES_READ_URL = POSTGRES_READ_URL
 
 
 # SQLAlchemy setup for write operations
