@@ -45,7 +45,7 @@ class RedisCache:
 
     async def put_user(self, user_email: str, user_data: dict):
         if self.client:
-            await self.client.set(f"user:{user_email}", json.dumps(user_data), expire=self.cache_timeout)
+            await self.client.set(f"user:{user_email}", json.dumps(user_data), ex=self.cache_timeout)
 
     async def get_user(self, user_email: str):
         if not self.client:

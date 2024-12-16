@@ -77,6 +77,7 @@ async def read_user(user_email: str, db=Depends(get_db_read), cache: RedisCache 
     if cache:
         cached_user = await cache.get_user(user_email)
         if cached_user:
+            print(f"Cache hit for {user_email}")
             return {"user": cached_user}
 
     # If not in cache or no cache, fetch from DB

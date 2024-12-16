@@ -7,7 +7,7 @@ POSTGRES_WRITE_PASSWORD = "ExampleUserPassword"
 POSTGRES_READ_PASSWORD = "ExampleUserPassword"
 POSTGRES_DATABASE = "test-database"
 
-CACHE_TIMEOUT = 5 * 60  # 5 minutes
+CACHE_TIMEOUT = 0.5 * 60  # 30 seconds
 REDIS_SERVICE = "localhost"
 REDIS_PORT = 6379
 REDIS_DB = 0
