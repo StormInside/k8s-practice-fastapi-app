@@ -14,22 +14,10 @@ POSTGRES_DATABASE = os.getenv("POSTGRES_DATABASE", POSTGRES_DATABASE)
 POSTGRES_WRITE_URL = f"postgresql+asyncpg://{POSTGRES_WRITE_USER}:{POSTGRES_WRITE_PASSWORD}@{POSTGRES_WRITE_SERVICE}/{POSTGRES_DATABASE}"
 POSTGRES_READ_URL = f"postgresql+asyncpg://{POSTGRES_READ_USER}:{POSTGRES_READ_PASSWORD}@{POSTGRES_READ_SERVICE}/{POSTGRES_DATABASE}"
 
+REDIS_SERVICE = os.getenv("REDIS_SERVICE", REDIS_SERVICE)
 REDIS_PORT = os.getenv("REDIS_PORT", REDIS_PORT)
 REDIS_DB = os.getenv("REDIS_DB", REDIS_DB)
 CACHE_TIMEOUT = os.getenv("CACHE_TIMEOUT", CACHE_TIMEOUT)
-
-POD_NAME = os.getenv("POD_NAME")  # e.g. "myrelease-fastapi-0"
-if POD_NAME:
-    NAMESPACE = os.getenv("NAMESPACE")  # e.g. "default"
-    REDIS_SERVICE = os.getenv("REDIS_SERVICE")  # e.g. "myrelease-redis"
-    # Extract the ordinal by splitting on '-'
-    # For "myrelease-fastapi-0", split by '-' gives ["myrelease", "fastapi", "0"]
-    ordinal = POD_NAME.split('-')[-1]
-    REDIS_HOST = f"{REDIS_SERVICE}-{ordinal}.{REDIS_SERVICE}.{NAMESPACE}.svc.cluster.local"
-else:
-    REDIS_HOST = os.getenv("REDIS_SERVICE", REDIS_SERVICE)
-
-print(f"REDIS_HOST: {REDIS_HOST}")
 
 LOG_LEVEL = os.getenv("LOG_LEVEL", LOG_LEVEL)
 

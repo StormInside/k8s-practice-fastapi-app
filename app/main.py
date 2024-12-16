@@ -28,7 +28,7 @@ async def lifespan(app: FastAPI):
     await create_db_and_tables()
 
     # Initialize and connect Redis cache
-    cache = RedisCache(host="localhost", port=6379, db=0)
+    cache = RedisCache()
     try:
         await cache.connect()
         app.state.cache = cache
