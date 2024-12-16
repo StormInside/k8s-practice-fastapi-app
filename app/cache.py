@@ -26,7 +26,7 @@ def get_redis_settings():
 class RedisCache:
     def __init__(self):
         settings = get_redis_settings()
-        print(f"RedisCache init params: {settings["host"]}:{settings["port"]}/{settings["db"]} with cache timeout {settings["cache_timeout"]}")
+        print(f"RedisCache init params: {settings['host']}:{settings['port']}/{settings['db']} with cache timeout {settings['cache_timeout']}")
         self.host = settings["host"]
         self.port = settings["port"]
         self.db = settings["db"]
