@@ -20,11 +20,12 @@ CACHE_TIMEOUT = os.getenv("CACHE_TIMEOUT", CACHE_TIMEOUT)
 
 POD_NAME = os.getenv("POD_NAME")  # e.g. "myrelease-fastapi-0"
 if POD_NAME:
+    NAMESPACE = os.getenv("NAMESPACE")  # e.g. "default"
     REDIS_SERVICE = os.getenv("REDIS_SERVICE")  # e.g. "myrelease-redis"
     # Extract the ordinal by splitting on '-'
     # For "myrelease-fastapi-0", split by '-' gives ["myrelease", "fastapi", "0"]
     ordinal = POD_NAME.split('-')[-1]
-    REDIS_HOST = f"{REDIS_SERVICE}-{ordinal}.{REDIS_SERVICE}"
+    REDIS_HOST = f"{REDIS_SERVICE}-{ordinal}.{REDIS_SERVICE}.{NAMESPACE}.svc.cluster.local"
 else:
     REDIS_HOST = os.getenv("REDIS_SERVICE", REDIS_SERVICE)
 
