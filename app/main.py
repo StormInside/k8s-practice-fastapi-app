@@ -97,3 +97,7 @@ async def read_users(db=Depends(get_db_read)):
     result = await db.execute(select(User))
     users = result.scalars().all()
     return {"users": [{"email": u.email, "name": u.name} for u in users]}
+
+@app.get("/healthz")
+async def healthz():
+    return {"status": "ok"}
