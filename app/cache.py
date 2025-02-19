@@ -16,7 +16,9 @@ def get_redis_settings():
         # For "myrelease-fastapi-0", split by '-' gives ["myrelease", "fastapi", "0"]
         ordinal = POD_NAME.split('-')[-1]
 
-        REDIS_HOST = f"{REDIS_SERVICE}-{ordinal}.{REDIS_SERVICE}.{NAMESPACE}.svc.cluster.local"
+        REDIS_HOST = f"{REDIS_SERVICE}-0.{REDIS_SERVICE}.{NAMESPACE}.svc.cluster.local"
+        if not REDIS_DB or REDIS_DB == 0:
+            REDIS_DB = int(ordinal)
     else:
 
         REDIS_HOST = os.getenv("REDIS_SERVICE", REDIS_SERVICE)
